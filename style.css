@@ -1,0 +1,72 @@
+/* Terravents — Custom CSS (Tailwind handles most styling) */
+
+/* Globe container fills its parent */
+#globe canvas {
+  display: block;
+}
+
+/* Timeline scrubber track styling */
+.timeline-scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  cursor: pointer;
+}
+
+.timeline-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  transition: transform 0.1s ease;
+}
+
+.timeline-scrubber::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.timeline-scrubber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Event drawer slide transition */
+.drawer-closed {
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.drawer-open {
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Globe.gl tooltip override — ensure it layers above globe */
+.globe-tooltip {
+  pointer-events: none;
+}

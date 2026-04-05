@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terravents — Earth's Natural History, Visualized</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Globe.gl -->
+  <script src="https://unpkg.com/globe.gl"></script>
+
+  <!-- Leaflet CSS (for drawer satellite map in Phase 5) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-black text-white overflow-hidden flex flex-col h-screen">
+
+  <!-- Header Bar -->
+  <header class="relative z-20 flex items-center justify-between px-6 py-3 bg-black/70 backdrop-blur border-b border-white/10 flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <span class="text-xl font-bold tracking-widest uppercase text-white">Terravents</span>
+      <span class="text-xs text-white/40 tracking-wider hidden sm:inline">Earth's Natural History, Visualized</span>
+    </div>
+    <!-- Filter controls will be injected here by filters.js -->
+    <div id="filter-controls" class="flex items-center gap-3"></div>
+  </header>
+
+  <!-- Globe Container -->
+  <main class="relative flex-1 overflow-hidden">
+    <div id="globe" class="w-full h-full"></div>
+
+    <!-- WebGL error overlay (shown by globe.js if WebGL unavailable) -->
+    <div id="webgl-error" class="hidden absolute inset-0 flex items-center justify-center bg-black z-30">
+      <div class="text-center max-w-sm px-6">
+        <div class="text-5xl mb-4">🌐</div>
+        <h2 class="text-xl font-semibold mb-2">WebGL Not Available</h2>
+        <p class="text-white/60 text-sm">
+          Terravents requires WebGL to render the 3D globe. Please try a modern browser
+          such as Chrome, Firefox, or Edge with hardware acceleration enabled.
+        </p>
+      </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="hidden absolute inset-0 flex items-center justify-center bg-black/40 z-10 pointer-events-none">
+      <div class="flex items-center gap-3 bg-black/80 px-5 py-3 rounded-full border border-white/20">
+        <div class="loading-spinner"></div>
+        <span class="text-sm text-white/80">Loading events…</span>
+      </div>
+    </div>
+
+    <!-- Event drawer (Phase 5) -->
+    <div id="event-drawer" class="drawer-closed absolute top-0 right-0 h-full w-96 bg-gray-950 border-l border-white/10 z-20 overflow-y-auto flex flex-col">
+      <div id="drawer-content" class="flex-1"></div>
+    </div>
+  </main>
+
+  <!-- Timeline Bar -->
+  <footer class="relative z-20 flex items-center gap-4 px-6 py-3 bg-black/70 backdrop-blur border-t border-white/10 flex-shrink-0">
+    <!-- Play/Pause button -->
+    <button id="play-btn" class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full border border-white/30 hover:border-white/60 transition-colors" title="Play/Pause">
+      <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+      <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white hidden" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+      </svg>
+    </button>
+
+    <!-- Timeline scrubber -->
+    <div class="flex-1 flex items-center gap-3">
+      <input
+        id="timeline-scrubber"
+        type="range"
+        min="0"
+        max="100"
+        value="100"
+        class="timeline-scrubber flex-1"
+        title="Timeline"
+      />
+    </div>
+
+    <!-- Date label -->
+    <span id="timeline-label" class="flex-shrink-0 text-xs text-white/60 font-mono w-28 text-right"></span>
+  </footer>
+
+  <!-- Leaflet JS (for drawer satellite map in Phase 5) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App modules -->
+  <script type="module" src="globe.js"></script>
+</body>
+</html>

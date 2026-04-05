@@ -43,7 +43,13 @@ export function initGlobe() {
     // Dark globe texture
     .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
     .width(container.clientWidth)
-    .height(container.clientHeight);
+    .height(container.clientHeight)
+    // Close drawer when clicking globe background (not a marker)
+    .onGlobeClick(() => {
+      if (typeof window.__onGlobeClick === 'function') {
+        window.__onGlobeClick();
+      }
+    });
 
   // Auto-rotation
   globeInstance.controls().autoRotate = true;

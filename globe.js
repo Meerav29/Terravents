@@ -18,8 +18,10 @@ function hasWebGL() {
 
 // --- State ---
 let globeInstance = null;
-let allEvents = [];
-let visibleEvents = [];
+let allEvents = [];      // Full event list from EONET (never mutated after load)
+let filteredBase = [];   // Subset after category/status filter (set by filters.js)
+let visibleEvents = [];  // Subset after date filter (what is actually rendered)
+let currentDateIso = null; // Last date passed to filterMarkersByDate
 let autoRotateTimer = null;
 let isUserInteracting = false;
 let drawerOpen = false;
@@ -92,8 +94,14 @@ function scheduleAutoRotateResume() {
 // --- Marker rendering ---
 export function renderMarkers(events) {
   allEvents = events;
-  visibleEvents = events;
-  _applyMarkers(visibleEvents);
+  filteredBase = events; // reset category filter base to full set
+  if (currentDateIso) {
+    // Re-apply the timeline date filter over the new event set
+    filterMarkersByDate(currentDateIso);
+  } else {
+    visibleEvents = events;
+    _applyMarkers(visibleEvents);
+  }
 }
 
 function _applyMarkers(events) {
@@ -141,10 +149,12 @@ function _applyMarkers(events) {
 }
 
 // --- Filter markers by date (called by timeline.js) ---
+// Filters from filteredBase so category filters are respected simultaneously.
 export function filterMarkersByDate(date) {
   if (!globeInstance) return;
-  const d = new Date(date);
-  visibleEvents = allEvents.filter(e => {
+  currentDateIso = typeof date === 'string' ? date : date.toISOString();
+  const d = new Date(currentDateIso);
+  visibleEvents = filteredBase.filter(e => {
     const start = new Date(e.date);
     if (start > d) return false;
     if (e.closed) {
@@ -156,9 +166,22 @@ export function filterMarkersByDate(date) {
   _applyMarkers(visibleEvents);
 }
 
-// --- Set visible events directly (called by filters.js) ---
-export function setVisibleEvents(events) {
-  _applyMarkers(events);
+// --- Update the category/status-filtered base (called by filters.js) ---
+// After updating filteredBase, re-applies the current date filter so both
+// filter dimensions are always combined correctly.
+export function setFilteredBase(events) {
+  filteredBase = events;
+  if (currentDateIso) {
+    filterMarkersByDate(currentDateIso);
+  } else {
+    visibleEvents = filteredBase;
+    _applyMarkers(visibleEvents);
+  }
+}
+
+// --- Expose the full event list so filters.js can compute its subset ---
+export function getAllEvents() {
+  return allEvents;
 }
 
 // --- Fly-to a coordinate ---

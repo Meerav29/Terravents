@@ -1,6 +1,7 @@
 // Terravents — Globe initialization and marker rendering
 
-import { CATEGORY_COLORS } from './config.js';
+import { CATEGORY_COLORS, DEFAULT_START_DATE, DEFAULT_END_DATE } from './config.js';
+import { fetchEvents } from './events.js';
 
 // --- WebGL detection ---
 function hasWebGL() {
@@ -179,4 +180,16 @@ export function resumeAutoRotate() {
 }
 
 // --- Bootstrap ---
-initGlobe();
+(async () => {
+  const globe = initGlobe();
+  if (!globe) return; // WebGL unavailable — error overlay already shown
+
+  // Show loading overlay while fetching
+  const loadingOverlay = document.getElementById('loading-overlay');
+  loadingOverlay.classList.remove('hidden');
+
+  const events = await fetchEvents(DEFAULT_START_DATE, DEFAULT_END_DATE);
+  renderMarkers(events);
+
+  loadingOverlay.classList.add('hidden');
+})();

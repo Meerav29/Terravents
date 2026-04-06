@@ -2,6 +2,7 @@
 
 import { CATEGORY_COLORS, DEFAULT_START_DATE, DEFAULT_END_DATE } from './config.js';
 import { fetchEvents } from './events.js';
+import { openDrawer } from './drawer.js';
 
 // --- WebGL detection ---
 function hasWebGL() {
@@ -17,14 +18,14 @@ function hasWebGL() {
 }
 
 // --- State ---
-let globeInstance = null;
-let allEvents = [];      // Full event list from EONET (never mutated after load)
-let filteredBase = [];   // Subset after category/status filter (set by filters.js)
-let visibleEvents = [];  // Subset after date filter (what is actually rendered)
-let currentDateIso = null; // Last date passed to filterMarkersByDate
+let globeInstance   = null;
+let allEvents       = [];      // Full event list from EONET (never mutated after load)
+let filteredBase    = [];      // Subset after category/status filter (set by filters.js)
+let visibleEvents   = [];      // Subset after date filter (what is actually rendered)
+let currentDateIso  = null;    // Last date passed to filterMarkersByDate
 let autoRotateTimer = null;
 let isUserInteracting = false;
-let drawerOpen = false;
+let drawerOpen      = false;
 
 // --- Init ---
 export function initGlobe() {
@@ -40,7 +41,6 @@ export function initGlobe() {
     .showAtmosphere(true)
     .atmosphereColor('rgba(100, 160, 255, 0.3)')
     .atmosphereAltitude(0.15)
-    // Dark globe texture
     .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
     .width(container.clientWidth)
     .height(container.clientHeight);
@@ -93,10 +93,9 @@ function scheduleAutoRotateResume() {
 
 // --- Marker rendering ---
 export function renderMarkers(events) {
-  allEvents = events;
+  allEvents    = events;
   filteredBase = events; // reset category filter base to full set
   if (currentDateIso) {
-    // Re-apply the timeline date filter over the new event set
     filterMarkersByDate(currentDateIso);
   } else {
     visibleEvents = events;
@@ -133,23 +132,20 @@ function _applyMarkers(events) {
         <span style="color: #aaa; font-size: 11px; margin-left: 8px;">${d.date ? d.date.slice(0, 10) : ''}</span>
       </div>
     `)
-    .onPointClick((point, _event, _coords) => {
-      if (typeof window.__onMarkerClick === 'function') {
-        window.__onMarkerClick(point);
-      } else {
-        console.log('Marker clicked:', point);
-      }
+    .onPointClick((point) => {
+      openDrawer(point);
     })
     .onPointHover((point) => {
-      // Update hovered state for radius change
       events.forEach(e => { e._hovered = false; });
       if (point) point._hovered = true;
       globeInstance.pointRadius(d => d._hovered ? 0.6 : 0.4);
     });
+
+  // Update the event count in the header
+  updateEventCount(events.length);
 }
 
 // --- Filter markers by date (called by timeline.js) ---
-// Filters from filteredBase so category filters are respected simultaneously.
 export function filterMarkersByDate(date) {
   if (!globeInstance) return;
   currentDateIso = typeof date === 'string' ? date : date.toISOString();
@@ -166,9 +162,7 @@ export function filterMarkersByDate(date) {
   _applyMarkers(visibleEvents);
 }
 
-// --- Update the category/status-filtered base (called by filters.js) ---
-// After updating filteredBase, re-applies the current date filter so both
-// filter dimensions are always combined correctly.
+// --- Update category/status-filtered base (called by filters.js) ---
 export function setFilteredBase(events) {
   filteredBase = events;
   if (currentDateIso) {
@@ -179,7 +173,7 @@ export function setFilteredBase(events) {
   }
 }
 
-// --- Expose the full event list so filters.js can compute its subset ---
+// --- Expose full event list so filters.js can compute its subset ---
 export function getAllEvents() {
   return allEvents;
 }
@@ -202,17 +196,88 @@ export function resumeAutoRotate() {
   scheduleAutoRotateResume();
 }
 
+// --- Event count badge ---
+function updateEventCount(count) {
+  const el = document.getElementById('event-count');
+  if (el) el.textContent = `${count.toLocaleString()} event${count !== 1 ? 's' : ''}`;
+}
+
+// --- Category legend ---
+function buildLegend() {
+  const CATEGORY_LABELS = {
+    wildfires:    'Wildfires',
+    severeStorms: 'Severe Storms',
+    volcanoes:    'Volcanoes',
+    seaLakeIce:   'Sea/Lake Ice',
+    earthquakes:  'Earthquakes',
+    floods:       'Floods',
+    landslides:   'Landslides',
+    drought:      'Drought',
+    dustHaze:     'Dust & Haze',
+    manmade:      'Manmade',
+    snow:         'Snow',
+    waterColor:   'Water Color',
+  };
+
+  const container = document.getElementById('legend-items');
+  if (!container) return;
+
+  container.innerHTML = Object.entries(CATEGORY_COLORS)
+    .map(([id, color]) => `
+      <div class="flex items-center gap-1.5">
+        <span class="flex-shrink-0 rounded-full" style="width:8px;height:8px;background-color:${color};"></span>
+        <span class="text-xs text-white/50 whitespace-nowrap">${CATEGORY_LABELS[id] || id}</span>
+      </div>
+    `)
+    .join('');
+}
+
+// --- Splash screen dismiss ---
+function initSplash() {
+  const overlay    = document.getElementById('splash-overlay');
+  const exploreBtn = document.getElementById('splash-explore-btn');
+  if (!overlay || !exploreBtn) return;
+
+  exploreBtn.addEventListener('click', () => {
+    overlay.classList.add('dismissed');
+    // Start globe auto-rotation once splash is dismissed
+    if (globeInstance) {
+      globeInstance.controls().autoRotate = true;
+    }
+  });
+}
+
 // --- Bootstrap ---
 (async () => {
   const globe = initGlobe();
-  if (!globe) return; // WebGL unavailable — error overlay already shown
+  if (!globe) return;
+
+  // Pause auto-rotation while splash is showing
+  if (globeInstance) {
+    globeInstance.controls().autoRotate = false;
+  }
+
+  // Init splash dismiss
+  initSplash();
+
+  // Build the category legend
+  buildLegend();
 
   // Show loading overlay while fetching
   const loadingOverlay = document.getElementById('loading-overlay');
-  loadingOverlay.classList.remove('hidden');
+  if (loadingOverlay) loadingOverlay.classList.remove('hidden');
 
   const events = await fetchEvents(DEFAULT_START_DATE, DEFAULT_END_DATE);
-  renderMarkers(events);
 
-  loadingOverlay.classList.add('hidden');
+  // Brief fade-in effect: temporarily dim globe canvas while markers load
+  const globeEl = document.getElementById('globe');
+  if (globeEl) globeEl.classList.add('markers-hidden');
+  renderMarkers(events);
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      if (globeEl) globeEl.classList.remove('markers-hidden');
+    }, 100);
+  });
+
+  if (loadingOverlay) loadingOverlay.classList.add('hidden');
 })();

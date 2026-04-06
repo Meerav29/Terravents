@@ -5,7 +5,9 @@
   display: block;
 }
 
-/* Timeline scrubber track styling */
+/* ============================================================
+   Timeline scrubber
+   ============================================================ */
 .timeline-scrubber {
   -webkit-appearance: none;
   appearance: none;
@@ -41,7 +43,9 @@
   border: 2px solid rgba(255, 255, 255, 0.4);
 }
 
-/* Event drawer slide transition */
+/* ============================================================
+   Event drawer slide transition
+   ============================================================ */
 .drawer-closed {
   transform: translateX(100%);
   transition: transform 0.3s ease;
@@ -52,7 +56,9 @@
   transition: transform 0.3s ease;
 }
 
-/* Loading spinner */
+/* ============================================================
+   Loading spinner
+   ============================================================ */
 .loading-spinner {
   width: 16px;
   height: 16px;
@@ -69,4 +75,55 @@
 /* Globe.gl tooltip override — ensure it layers above globe */
 .globe-tooltip {
   pointer-events: none;
+}
+
+/* ============================================================
+   Splash overlay
+   ============================================================ */
+.splash-overlay {
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+.splash-overlay.dismissed {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Subtle dot-grid background for the splash */
+.splash-stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+/* Glow around the globe SVG icon */
+.splash-glow svg {
+  filter: drop-shadow(0 0 18px rgba(96, 165, 250, 0.5));
+}
+
+/* Splash button subtle pulse on load */
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.15); }
+  50%       { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+}
+
+.splash-btn {
+  animation: pulse-border 2.5s ease infinite;
+}
+
+/* ============================================================
+   Globe marker fade-in transition
+   Points rendered by Globe.gl use canvas, so we animate the
+   container opacity on initial load instead of individual points.
+   ============================================================ */
+#globe {
+  transition: opacity 0.4s ease;
+}
+
+#globe.markers-hidden {
+  opacity: 0.6;
 }
